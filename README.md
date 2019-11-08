@@ -1,14 +1,12 @@
 
 ### Questions
-* Update Many...How do we get this to work?
-    * This is something I don't know well...just being honest
-* How to take a dataframe and store it as a database
-* How to store images in a mongodb
+- Column Stores vs Key: Value 
+- RDDs
 
 ### Objectives
 YWBAT
 * write data into a mongo db
-* read data from a a mongo db
+* read data from a mongo db
 
 ## Steps to run Mongo and PyMongo
 * Step 1: Run `mongod` in your terminal
@@ -24,13 +22,12 @@ YWBAT
 ```python
 import json
 import requests
+import tweepy
 
 import pandas as pd
 import numpy as np
 from PIL import Image, ImageShow
 from io import StringIO, BytesIO
-
-from bs4 import BeautifulSoup
 
 from pymongo import MongoClient
 
@@ -63,13 +60,18 @@ client.list_database_names() # show dbs in mongo
 
 
 
-    ['admin', 'config', 'local', 'marchmadness', 'music_tweets', 'mydb', 'tweets']
+    ['admin', 'config', 'local', 'music_tweets', 'tweets']
 
 
 
 
 ```python
-new_db = client.["new_db"]
+new_db = client["new_db"]
+```
+
+
+```python
+students_collection = new_db["students"]
 ```
 
 
@@ -80,90 +82,7 @@ client.list_database_names()
 
 
 
-    ['admin',
-     'config',
-     'local',
-     'marchmadness',
-     'music_tweets',
-     'mydb',
-     'new_db',
-     'tweets']
-
-
-
-
-```python
-students_collection = new_db["students"]
-```
-
-
-```python
-keys = ["name", "age", "state", "favorite_color", "favorite_scientist"]
-
-savannah = dict(zip(keys, ['Savannah', 27, 'DC', 'teal', 'stephen hawking']))
-savannah
-```
-
-
-
-
-    {'name': 'Savannah',
-     'age': 27,
-     'state': 'DC',
-     'favorite_color': 'teal',
-     'favorite_scientist': 'stephen hawking'}
-
-
-
-
-```python
-# let's insert this dictionary into my new collection
-students_collection.insert_one(savannah)
-```
-
-
-
-
-    <pymongo.results.InsertOneResult at 0x1a1b7af3c8>
-
-
-
-
-```python
-matthew = dict(zip(keys, ['Matthew', 37, 'VA', 'red', 'alan turing']))
-students_collection.insert_one(matthew)
-```
-
-
-
-
-    <pymongo.results.InsertOneResult at 0x1a1b7af488>
-
-
-
-
-```python
-dennis = dict(zip(keys, ['Dennis', 37, 'WV', 'green', 'nikolai tesla']))
-students_collection.insert_one(dennis)
-```
-
-
-
-
-    <pymongo.results.InsertOneResult at 0x1a1b39d488>
-
-
-
-
-```python
-levi = dict(zip(keys, ['Levi', 30, 'NY', 'aqua', 'thomas edison']))
-students_collection.insert_one(levi)
-```
-
-
-
-
-    <pymongo.results.InsertOneResult at 0x1a1b7a2bc8>
+    ['admin', 'config', 'local', 'music_tweets', 'tweets']
 
 
 
@@ -174,97 +93,410 @@ instructors_collection = new_db['instructors']
 
 
 ```python
-rafael = dict(zip(keys, ['rafael', 32, 'TX', 'purple', 'richard feynmann']))
-instructors_collection.insert_one(rafael)
-```
-
-
-
-
-    <pymongo.results.InsertOneResult at 0x1a1b39b648>
-
-
-
-
-```python
 new_db.list_collection_names()
 ```
 
 
 
 
-    ['instructors', 'students']
+    []
 
+
+
+### Let's populate students
+
+
+
+```python
+def fill_form():
+    form = {}
+    
+    name = input("Enter Name: ")
+    form['name'] = name
+    
+    age = int(input("Enter Age: "))
+    form['age'] = age
+    
+    favorite_instructor = "Rafael"
+    form["favorite_instructor"] = favorite_instructor
+    
+    favorite_cartoon = input("What's your favorite cartoon? ")
+    form["favorite_cartoon"] = favorite_cartoon
+    
+    state = input("State of Residence")
+    form["state"] = state
+    
+    track = input("What are you studying?\n1. SE\n2. DS\n3.UI/UX")
+    form["track"] = track
+    return form
+```
+
+
+```python
+def form_input_flow(client, db='new_db', collection='students'):
+    form = fill_form()
+    
+    # created a variable for my collection
+    coll = client[db][collection]
+    coll.insert_one(form)
+    total_docs = coll.count_documents()
+    print(f"Inserted a new form, you now have {total_docs} documents in {collection}")
+    return None
+```
+
+
+```python
+while True:
+    form_input_flow(client=client)
+```
+
+    Enter Name: Andrew Smith
+    Enter Age: 31
+    What's your favorite cartoon? DBZ
+    State of ResidenceTX
+    What are you studying?
+    1. SE
+    2. DS
+    3.UI/UXDS
+
+
+    /Users/rafael/anaconda3/envs/flatiron-env/lib/python3.6/site-packages/ipykernel_launcher.py:7: DeprecationWarning: count is deprecated. Use estimated_document_count or count_documents instead. Please note that $where must be replaced by $expr, $near must be replaced by $geoWithin with $center, and $nearSphere must be replaced by $geoWithin with $centerSphere
+      import sys
+
+
+    Inserted a new form, you now have 1 documents in students
+    Enter Name: Bryan Jamieson
+    Enter Age: 24
+    What's your favorite cartoon? Scoobie-Doo
+    State of ResidenceOH
+    What are you studying?
+    1. SE
+    2. DS
+    3.UI/UXDS
+    Inserted a new form, you now have 2 documents in students
+    Enter Name: Jeffrey Hinkle
+    Enter Age: 44
+    What's your favorite cartoon? Tom and Jerry
+    State of ResidenceGA
+    What are you studying?
+    1. SE
+    2. DS
+    3.UI/UXDS
+    Inserted a new form, you now have 3 documents in students
+    Enter Name: Dr. Who
+    Enter Age: 25
+    What's your favorite cartoon? DBS
+    State of ResidenceGA
+    What are you studying?
+    1. SE
+    2. DS
+    3.UI/UXDS
+    Inserted a new form, you now have 4 documents in students
+    Enter Name: Mathew Menarchy
+    Enter Age: 35
+    What's your favorite cartoon? Animaniacs
+    State of ResidenceTN
+    What are you studying?
+    1. SE
+    2. DS
+    3.UI/UXDS
+    Inserted a new form, you now have 5 documents in students
+
+
+
+    -----------------------------------------------
+
+    KeyboardInterruptTraceback (most recent call last)
+
+    ~/anaconda3/envs/flatiron-env/lib/python3.6/site-packages/ipykernel/kernelbase.py in _input_request(self, prompt, ident, parent, password)
+        884             try:
+    --> 885                 ident, reply = self.session.recv(self.stdin_socket, 0)
+        886             except Exception:
+
+
+    ~/anaconda3/envs/flatiron-env/lib/python3.6/site-packages/jupyter_client/session.py in recv(self, socket, mode, content, copy)
+        802         try:
+    --> 803             msg_list = socket.recv_multipart(mode, copy=copy)
+        804         except zmq.ZMQError as e:
+
+
+    ~/anaconda3/envs/flatiron-env/lib/python3.6/site-packages/zmq/sugar/socket.py in recv_multipart(self, flags, copy, track)
+        474         """
+    --> 475         parts = [self.recv(flags, copy=copy, track=track)]
+        476         # have first part already, only loop while more to receive
+
+
+    zmq/backend/cython/socket.pyx in zmq.backend.cython.socket.Socket.recv()
+
+
+    zmq/backend/cython/socket.pyx in zmq.backend.cython.socket.Socket.recv()
+
+
+    zmq/backend/cython/socket.pyx in zmq.backend.cython.socket._recv_copy()
+
+
+    ~/anaconda3/envs/flatiron-env/lib/python3.6/site-packages/zmq/backend/cython/checkrc.pxd in zmq.backend.cython.checkrc._check_rc()
+
+
+    KeyboardInterrupt: 
+
+    
+    During handling of the above exception, another exception occurred:
+
+
+    KeyboardInterruptTraceback (most recent call last)
+
+    <ipython-input-24-71d0a0d52764> in <module>
+          1 while True:
+    ----> 2     form_input_flow(client=client)
+    
+
+    <ipython-input-23-2348984e1a55> in form_input_flow(client, db, collection)
+          1 def form_input_flow(client, db='new_db', collection='students'):
+    ----> 2     form = fill_form()
+          3 
+          4     # created a variable for my collection
+          5     coll = client[db][collection]
+
+
+    <ipython-input-21-bca7e9067b23> in fill_form()
+          2     form = {}
+          3 
+    ----> 4     name = input("Enter Name: ")
+          5     form['name'] = name
+          6 
+
+
+    ~/anaconda3/envs/flatiron-env/lib/python3.6/site-packages/ipykernel/kernelbase.py in raw_input(self, prompt)
+        858             self._parent_ident,
+        859             self._parent_header,
+    --> 860             password=False,
+        861         )
+        862 
+
+
+    ~/anaconda3/envs/flatiron-env/lib/python3.6/site-packages/ipykernel/kernelbase.py in _input_request(self, prompt, ident, parent, password)
+        888             except KeyboardInterrupt:
+        889                 # re-raise KeyboardInterrupt, to truncate traceback
+    --> 890                 raise KeyboardInterrupt
+        891             else:
+        892                 break
+
+
+    KeyboardInterrupt: 
 
 
 ### Filling out forms you can almost guarantee this is going into a database
 
 
 ```python
-# select all from students query....how do I do this?
+students_collection.count_documents(filter={})
+```
+
+
+
+
+    5
+
+
+
+
+```python
+list(students_collection.find({"age": {"$gt": 30}}))
+```
+
+
+
+
+    [{'_id': ObjectId('5d9f7a4e060ef7ed5960f9d9'),
+      'name': 'Andrew Smith',
+      'age': 31,
+      'favorite_instructor': 'Rafael',
+      'favorite_cartoon': 'DBZ',
+      'state': 'TX',
+      'track': 'DS'},
+     {'_id': ObjectId('5d9f7ac1060ef7ed5960f9db'),
+      'name': 'Jeffrey Hinkle',
+      'age': 44,
+      'favorite_instructor': 'Rafael',
+      'favorite_cartoon': 'Tom and Jerry',
+      'state': 'GA',
+      'track': 'DS'},
+     {'_id': ObjectId('5d9f7b1e060ef7ed5960f9dd'),
+      'name': 'Mathew Menarchy',
+      'age': 35,
+      'favorite_instructor': 'Rafael',
+      'favorite_cartoon': 'Animaniacs',
+      'state': 'TN',
+      'track': 'DS'}]
+
+
+
+
+```python
+new_student = {"name": "The Master"}
+students_collection.insert_one(new_student)
+
 list(students_collection.find({}))
 ```
 
 
 
 
-    [{'_id': ObjectId('5d02a52d0fd6cac811d94c11'),
-      'name': 'Savannah',
-      'age': 27,
-      'state': 'DC',
-      'favorite_color': 'teal',
-      'favorite_scientist': 'stephen hawking'},
-     {'_id': ObjectId('5d02a5830fd6cac811d94c12'),
-      'name': 'Matthew',
-      'age': 37,
-      'state': 'VA',
-      'favorite_color': 'red',
-      'favorite_scientist': 'alan turing'},
-     {'_id': ObjectId('5d02a5c70fd6cac811d94c13'),
-      'name': 'Dennis',
-      'age': 37,
-      'state': 'WV',
-      'favorite_color': 'green',
-      'favorite_scientist': 'nikolai tesla'},
-     {'_id': ObjectId('5d02a5ff0fd6cac811d94c14'),
-      'name': 'Levi',
-      'age': 30,
-      'state': 'NY',
-      'favorite_color': 'aqua',
-      'favorite_scientist': 'thomas edison'}]
-
-
-
-
-```python
-list(instructors_collection.find({}))
-```
-
-
-
-
-    [{'_id': ObjectId('5d02a6400fd6cac811d94c15'),
-      'name': 'rafael',
-      'age': 32,
+    [{'_id': ObjectId('5d9f7a4e060ef7ed5960f9d9'),
+      'name': 'Andrew Smith',
+      'age': 31,
+      'favorite_instructor': 'Rafael',
+      'favorite_cartoon': 'DBZ',
       'state': 'TX',
-      'favorite_color': 'purple',
-      'favorite_scientist': 'richard feynmann'}]
+      'track': 'DS'},
+     {'_id': ObjectId('5d9f7a92060ef7ed5960f9da'),
+      'name': 'Bryan Jamieson',
+      'age': 24,
+      'favorite_instructor': 'Rafael',
+      'favorite_cartoon': 'Scoobie-Doo',
+      'state': 'OH',
+      'track': 'DS'},
+     {'_id': ObjectId('5d9f7ac1060ef7ed5960f9db'),
+      'name': 'Jeffrey Hinkle',
+      'age': 44,
+      'favorite_instructor': 'Rafael',
+      'favorite_cartoon': 'Tom and Jerry',
+      'state': 'GA',
+      'track': 'DS'},
+     {'_id': ObjectId('5d9f7af3060ef7ed5960f9dc'),
+      'name': 'Dr. Who',
+      'age': 25,
+      'favorite_instructor': 'Rafael',
+      'favorite_cartoon': 'DBS',
+      'state': 'GA',
+      'track': 'DS'},
+     {'_id': ObjectId('5d9f7b1e060ef7ed5960f9dd'),
+      'name': 'Mathew Menarchy',
+      'age': 35,
+      'favorite_instructor': 'Rafael',
+      'favorite_cartoon': 'Animaniacs',
+      'state': 'TN',
+      'track': 'DS'},
+     {'_id': ObjectId('5d9f7c45060ef7ed5960f9de'), 'name': 'The Master'}]
 
 
 
 
 ```python
-boston_collection = new_db['boston']
+df = pd.DataFrame(list(students_collection.find({})))
+df.head(10)
 ```
 
-### Let's make a dataframe and store it as a collection of documents
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>_id</th>
+      <th>name</th>
+      <th>age</th>
+      <th>favorite_instructor</th>
+      <th>favorite_cartoon</th>
+      <th>state</th>
+      <th>track</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>0</td>
+      <td>5d9f7a4e060ef7ed5960f9d9</td>
+      <td>Andrew Smith</td>
+      <td>31.0</td>
+      <td>Rafael</td>
+      <td>DBZ</td>
+      <td>TX</td>
+      <td>DS</td>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td>5d9f7a92060ef7ed5960f9da</td>
+      <td>Bryan Jamieson</td>
+      <td>24.0</td>
+      <td>Rafael</td>
+      <td>Scoobie-Doo</td>
+      <td>OH</td>
+      <td>DS</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>5d9f7ac1060ef7ed5960f9db</td>
+      <td>Jeffrey Hinkle</td>
+      <td>44.0</td>
+      <td>Rafael</td>
+      <td>Tom and Jerry</td>
+      <td>GA</td>
+      <td>DS</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>5d9f7af3060ef7ed5960f9dc</td>
+      <td>Dr. Who</td>
+      <td>25.0</td>
+      <td>Rafael</td>
+      <td>DBS</td>
+      <td>GA</td>
+      <td>DS</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>5d9f7b1e060ef7ed5960f9dd</td>
+      <td>Mathew Menarchy</td>
+      <td>35.0</td>
+      <td>Rafael</td>
+      <td>Animaniacs</td>
+      <td>TN</td>
+      <td>DS</td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td>5d9f7c45060ef7ed5960f9de</td>
+      <td>The Master</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+
+### Let's put a dataframe into our mongodb
 
 
 ```python
+from sklearn.datasets import load_boston
 boston = load_boston()
 data = boston.data
-columns = boston.feature_names
-df = pd.DataFrame(data, columns=columns)
+target = boston.target
+features = boston.feature_names
+
+df = pd.DataFrame(data, columns=features)
+df['target'] = target
 df.head()
 ```
 
@@ -302,11 +534,12 @@ df.head()
       <th>PTRATIO</th>
       <th>B</th>
       <th>LSTAT</th>
+      <th>target</th>
     </tr>
   </thead>
   <tbody>
     <tr>
-      <th>0</th>
+      <td>0</td>
       <td>0.00632</td>
       <td>18.0</td>
       <td>2.31</td>
@@ -320,9 +553,10 @@ df.head()
       <td>15.3</td>
       <td>396.90</td>
       <td>4.98</td>
+      <td>24.0</td>
     </tr>
     <tr>
-      <th>1</th>
+      <td>1</td>
       <td>0.02731</td>
       <td>0.0</td>
       <td>7.07</td>
@@ -336,9 +570,10 @@ df.head()
       <td>17.8</td>
       <td>396.90</td>
       <td>9.14</td>
+      <td>21.6</td>
     </tr>
     <tr>
-      <th>2</th>
+      <td>2</td>
       <td>0.02729</td>
       <td>0.0</td>
       <td>7.07</td>
@@ -352,9 +587,10 @@ df.head()
       <td>17.8</td>
       <td>392.83</td>
       <td>4.03</td>
+      <td>34.7</td>
     </tr>
     <tr>
-      <th>3</th>
+      <td>3</td>
       <td>0.03237</td>
       <td>0.0</td>
       <td>2.18</td>
@@ -368,9 +604,10 @@ df.head()
       <td>18.7</td>
       <td>394.63</td>
       <td>2.94</td>
+      <td>33.4</td>
     </tr>
     <tr>
-      <th>4</th>
+      <td>4</td>
       <td>0.06905</td>
       <td>0.0</td>
       <td>2.18</td>
@@ -384,6 +621,7 @@ df.head()
       <td>18.7</td>
       <td>396.90</td>
       <td>5.33</td>
+      <td>36.2</td>
     </tr>
   </tbody>
 </table>
@@ -391,130 +629,53 @@ df.head()
 
 
 
-# How can we do this?????......
-
 
 ```python
-# iterate through rows
-# convert row to dictionary
-# insert row
+boston_collection = new_db['boston']
+
 for index, row in df.iterrows():
-    doc = dict(row) # NOICE We can turn this row into a dictionary because python is awesome
-    boston_collection.insert_one(doc)
+    # now insert every row into our collection
+    boston_collection.insert_one(dict(row))
+
+df.shape, boston_collection.count_documents({})
 ```
 
 
-```python
-list(boston_collection.find({}))[:2]
-```
 
 
-
-
-    [{'_id': ObjectId('5d02a82d0fd6cac811d94c16'),
-      'CRIM': 0.00632,
-      'ZN': 18.0,
-      'INDUS': 2.31,
-      'CHAS': 0.0,
-      'NOX': 0.538,
-      'RM': 6.575,
-      'AGE': 65.2,
-      'DIS': 4.09,
-      'RAD': 1.0,
-      'TAX': 296.0,
-      'PTRATIO': 15.3,
-      'B': 396.9,
-      'LSTAT': 4.98},
-     {'_id': ObjectId('5d02a82d0fd6cac811d94c17'),
-      'CRIM': 0.02731,
-      'ZN': 0.0,
-      'INDUS': 7.07,
-      'CHAS': 0.0,
-      'NOX': 0.469,
-      'RM': 6.421,
-      'AGE': 78.9,
-      'DIS': 4.9671,
-      'RAD': 2.0,
-      'TAX': 242.0,
-      'PTRATIO': 17.8,
-      'B': 396.9,
-      'LSTAT': 9.14}]
+    ((506, 14), 506)
 
 
 
 
 ```python
-boston2_coll = new_db["boston2"]
+rows = [dict(row) for i, row in df.iterrows()]
+
+boston_collection.insert_many(rows)
+
+boston_collection.count_documents({})
 ```
 
 
-```python
-# or insert all at once using to_json and json_loads
-boston2_coll.insert_many(json.loads(df.to_json(orient='records')))
-```
 
 
-
-
-    <pymongo.results.InsertManyResult at 0x1a1a423108>
+    1012
 
 
 
 
 ```python
-res1 = list(boston_collection.find({}))
-res2 = list(boston2_coll.find({}))
+
 ```
 
 
 ```python
-res1[0]
+
 ```
 
+### Let's make a dataframe and store it as a collection of documents
 
-
-
-    {'_id': ObjectId('5d02a82d0fd6cac811d94c16'),
-     'CRIM': 0.00632,
-     'ZN': 18.0,
-     'INDUS': 2.31,
-     'CHAS': 0.0,
-     'NOX': 0.538,
-     'RM': 6.575,
-     'AGE': 65.2,
-     'DIS': 4.09,
-     'RAD': 1.0,
-     'TAX': 296.0,
-     'PTRATIO': 15.3,
-     'B': 396.9,
-     'LSTAT': 4.98}
-
-
-
-
-```python
-res2[0]
-```
-
-
-
-
-    {'_id': ObjectId('5d02a9690fd6cac811d94e10'),
-     'CRIM': 0.00632,
-     'ZN': 18.0,
-     'INDUS': 2.31,
-     'CHAS': 0.0,
-     'NOX': 0.538,
-     'RM': 6.575,
-     'AGE': 65.2,
-     'DIS': 4.09,
-     'RAD': 1.0,
-     'TAX': 296.0,
-     'PTRATIO': 15.3,
-     'B': 396.9,
-     'LSTAT': 4.98}
-
-
+# How can we do this?????......
 
 # Let's scrape some ebay images and store in a Mongo DB
 
@@ -544,13 +705,13 @@ image_urls
 
 
 
-    ['https://i.ebayimg.com/thumbs/images/g/JlsAAOSwAYlcsNpc/s-l225.jpg',
+    ['https://i.ebayimg.com/thumbs/images/g/sfsAAOSwB21c6~bF/s-l225.jpg',
+     'https://i.ebayimg.com/thumbs/images/g/thYAAOSwARpdArg1/s-l225.jpg',
      'https://i.ebayimg.com/thumbs/images/g/RaoAAOSwPYdcbteC/s-l225.jpg',
-     'https://i.ebayimg.com/thumbs/images/g/QHUAAOSwQXlcUNZI/s-l225.jpg',
+     'https://i.ebayimg.com/thumbs/images/g/JlsAAOSwAYlcsNpc/s-l225.jpg',
      'https://i.ebayimg.com/thumbs/images/g/YrMAAOSwZXpc-UBQ/s-l225.jpg',
-     'https://i.ebayimg.com/thumbs/images/g/WAAAAOSwiSJbmWmJ/s-l225.jpg',
      'https://i.ebayimg.com/thumbs/images/g/4wQAAOSw6GhcdJph/s-l225.jpg',
-     'https://i.ebayimg.com/thumbs/images/g/BW4AAOSwootcv5BX/s-l225.jpg']
+     'https://i.ebayimg.com/thumbs/images/g/0voAAOSwgRpc8EgZ/s-l225.jpg']
 
 
 
@@ -559,6 +720,19 @@ image_urls
 r = requests.get(image_urls[0])
 r.content
 i = Image.open(BytesIO(r.content))
+i
+```
+
+
+
+
+![png](lesson-plan_files/lesson-plan_37_0.png)
+
+
+
+
+```python
+new_db = client['new_db']
 ```
 
 
@@ -580,7 +754,7 @@ funko_coll.insert_one({'image_content': r.content})
 
 
 ```python
-for url in image_urls[1:]:
+for url in image_urls:
     r = requests.get(url)
     r.content
     i = Image.open(BytesIO(r.content))
@@ -589,13 +763,13 @@ for url in image_urls[1:]:
 
 
 ```python
-Image.open(BytesIO(list(funko_coll.find({}, {'image_content'}))[0]['image_content']))
+Image.open(BytesIO(list(funko_coll.find({}, {'image_content'}))[-1]['image_content']))
 ```
 
 
 
 
-![png](lesson-plan_files/lesson-plan_44_0.png)
+![png](lesson-plan_files/lesson-plan_42_0.png)
 
 
 
@@ -608,20 +782,221 @@ for res in funko_coll.find({}):
 
 
 ```python
-
+tweets = client['tweets']
 ```
 
 
 ```python
-
+donald_tweets = tweets["donald_tweets"]
 ```
 
+
+```python
+from pprint import pprint
+for tweet in donald_tweets.find({}):
+    pprint(tweet)
+    break
+```
+
+    {'_id': ObjectId('5c8f9c97191c8235fd5613a7'),
+     'contributors': None,
+     'coordinates': None,
+     'created_at': 'Mon Mar 18 13:26:42 +0000 2019',
+     'entities': {'hashtags': [],
+                  'symbols': [],
+                  'urls': [{'display_url': 'twitter.com/i/web/status/1…',
+                            'expanded_url': 'https://twitter.com/i/web/status/1107634434432532481',
+                            'indices': [117, 140],
+                            'url': 'https://t.co/twRWeJ9rFG'}],
+                  'user_mentions': []},
+     'extended_tweet': {'display_text_range': [0, 165],
+                        'entities': {'hashtags': [],
+                                     'symbols': [],
+                                     'urls': [],
+                                     'user_mentions': []},
+                        'full_text': 'I will have to check my UNFOLLOW group that '
+                                     "allows me to see tRUMP's tweets without "
+                                     'giving him credit for me or anyone else '
+                                     'following him if they so choose. I chose!'},
+     'favorite_count': 0,
+     'favorited': False,
+     'filter_level': 'low',
+     'geo': None,
+     'id': 1107634434432532481,
+     'id_str': '1107634434432532481',
+     'in_reply_to_screen_name': None,
+     'in_reply_to_status_id': None,
+     'in_reply_to_status_id_str': None,
+     'in_reply_to_user_id': None,
+     'in_reply_to_user_id_str': None,
+     'is_quote_status': True,
+     'lang': 'en',
+     'place': None,
+     'quote_count': 0,
+     'quoted_status': {'contributors': None,
+                       'coordinates': None,
+                       'created_at': 'Sun Mar 17 18:34:36 +0000 2019',
+                       'entities': {'hashtags': [],
+                                    'symbols': [],
+                                    'urls': [{'display_url': 'twitter.com/i/web/status/1…',
+                                              'expanded_url': 'https://twitter.com/i/web/status/1107349530260000774',
+                                              'indices': [116, 139],
+                                              'url': 'https://t.co/rGbWdotUtl'}],
+                                    'user_mentions': []},
+                       'extended_tweet': {'display_text_range': [0, 280],
+                                          'entities': {'hashtags': [],
+                                                       'symbols': [],
+                                                       'urls': [],
+                                                       'user_mentions': [{'id': 12,
+                                                                          'id_str': '12',
+                                                                          'indices': [143,
+                                                                                      148],
+                                                                          'name': 'jack',
+                                                                          'screen_name': 'jack'}]},
+                                          'full_text': 'I’ve reported all of '
+                                                       'tRumps tweets on twitter '
+                                                       'today. He’s becoming more '
+                                                       'aggressive and hostile. '
+                                                       'What has to happen to get '
+                                                       'tRump out of the WH. @jack '
+                                                       '— why does Twitter '
+                                                       'continue to allow someone '
+                                                       'that’s clearly not '
+                                                       'mentally stable to use '
+                                                       'Twitter? tRumps account '
+                                                       'should be suspended.'},
+                       'favorite_count': 774,
+                       'favorited': False,
+                       'filter_level': 'low',
+                       'geo': None,
+                       'id': 1107349530260000774,
+                       'id_str': '1107349530260000774',
+                       'in_reply_to_screen_name': None,
+                       'in_reply_to_status_id': None,
+                       'in_reply_to_status_id_str': None,
+                       'in_reply_to_user_id': None,
+                       'in_reply_to_user_id_str': None,
+                       'is_quote_status': False,
+                       'lang': 'en',
+                       'place': None,
+                       'quote_count': 14,
+                       'reply_count': 63,
+                       'retweet_count': 262,
+                       'retweeted': False,
+                       'source': '<a href="http://twitter.com/download/iphone" '
+                                 'rel="nofollow">Twitter for iPhone</a>',
+                       'text': 'I’ve reported all of tRumps tweets on twitter '
+                               'today. He’s becoming more aggressive and hostile. '
+                               'What has to happen… https://t.co/rGbWdotUtl',
+                       'truncated': True,
+                       'user': {'contributors_enabled': False,
+                                'created_at': 'Thu Jul 07 12:33:13 +0000 2016',
+                                'default_profile': False,
+                                'default_profile_image': False,
+                                'description': 'Renegade Ex Republican. Now a '
+                                               '(D).There can be no real peace '
+                                               'without Justice. And without '
+                                               '#Resistance there will be no '
+                                               'Justice. #AlwaysWithHer '
+                                               '#AlwaysWithStacey',
+                                'favourites_count': 38995,
+                                'follow_request_sent': None,
+                                'followers_count': 33631,
+                                'following': None,
+                                'friends_count': 25424,
+                                'geo_enabled': False,
+                                'id': 751031312648171520,
+                                'id_str': '751031312648171520',
+                                'is_translator': False,
+                                'lang': 'en',
+                                'listed_count': 69,
+                                'location': 'Atlanta, Ga',
+                                'name': 'Debbie',
+                                'notifications': None,
+                                'profile_background_color': '000000',
+                                'profile_background_image_url': 'http://abs.twimg.com/images/themes/theme1/bg.png',
+                                'profile_background_image_url_https': 'https://abs.twimg.com/images/themes/theme1/bg.png',
+                                'profile_background_tile': False,
+                                'profile_banner_url': 'https://pbs.twimg.com/profile_banners/751031312648171520/1480811561',
+                                'profile_image_url': 'http://pbs.twimg.com/profile_images/1106681706331942912/uq3WKYpw_normal.jpg',
+                                'profile_image_url_https': 'https://pbs.twimg.com/profile_images/1106681706331942912/uq3WKYpw_normal.jpg',
+                                'profile_link_color': 'F58EA8',
+                                'profile_sidebar_border_color': '000000',
+                                'profile_sidebar_fill_color': '000000',
+                                'profile_text_color': '000000',
+                                'profile_use_background_image': False,
+                                'protected': False,
+                                'screen_name': 'Dangchick1',
+                                'statuses_count': 62249,
+                                'time_zone': None,
+                                'translator_type': 'none',
+                                'url': None,
+                                'utc_offset': None,
+                                'verified': False}},
+     'quoted_status_id': 1107349530260000774,
+     'quoted_status_id_str': '1107349530260000774',
+     'quoted_status_permalink': {'display': 'twitter.com/Dangchick1/sta…',
+                                 'expanded': 'https://twitter.com/Dangchick1/status/1107349530260000774',
+                                 'url': 'https://t.co/9NvK3sVAuB'},
+     'reply_count': 0,
+     'retweet_count': 0,
+     'retweeted': False,
+     'source': '<a href="https://mobile.twitter.com" rel="nofollow">Twitter Web '
+               'App</a>',
+     'text': "I will have to check my UNFOLLOW group that allows me to see tRUMP's "
+             'tweets without giving him credit for me or any… '
+             'https://t.co/twRWeJ9rFG',
+     'timestamp_ms': '1552915602678',
+     'truncated': True,
+     'user': {'contributors_enabled': False,
+              'created_at': 'Sat Mar 28 00:21:12 +0000 2009',
+              'default_profile': False,
+              'default_profile_image': False,
+              'description': '"Itinerant" Army Brat, HAPPILY married mother of 2 '
+                             'grown children, RN Retired, NOT looking for any '
+                             'boyfriends, no DMs, lists or any of that other '
+                             'stuff.',
+              'favourites_count': 38077,
+              'follow_request_sent': None,
+              'followers_count': 1115,
+              'following': None,
+              'friends_count': 2798,
+              'geo_enabled': True,
+              'id': 27136763,
+              'id_str': '27136763',
+              'is_translator': False,
+              'lang': 'en',
+              'listed_count': 0,
+              'location': 'Mississippi, USA',
+              'name': 'Linda Meylan',
+              'notifications': None,
+              'profile_background_color': '2CB85F',
+              'profile_background_image_url': 'http://abs.twimg.com/images/themes/theme13/bg.gif',
+              'profile_background_image_url_https': 'https://abs.twimg.com/images/themes/theme13/bg.gif',
+              'profile_background_tile': True,
+              'profile_banner_url': 'https://pbs.twimg.com/profile_banners/27136763/1482337602',
+              'profile_image_url': 'http://pbs.twimg.com/profile_images/1073365044631650305/yDtrbIr9_normal.jpg',
+              'profile_image_url_https': 'https://pbs.twimg.com/profile_images/1073365044631650305/yDtrbIr9_normal.jpg',
+              'profile_link_color': '1B95E0',
+              'profile_sidebar_border_color': 'CC588C',
+              'profile_sidebar_fill_color': 'E3D16D',
+              'profile_text_color': '0A2270',
+              'profile_use_background_image': False,
+              'protected': False,
+              'screen_name': 'Lmeylan',
+              'statuses_count': 11883,
+              'time_zone': None,
+              'translator_type': 'none',
+              'url': None,
+              'utc_offset': None,
+              'verified': False}}
+
+
 ### What did we learn today?
-* How to make a table in a markdown cell
-* Convert a Dataframe into a MongoDB
-* How to scrape images and store them in a mongodb
-* insert_many
-* Learned more about each other #community
+* the syntax for mongo is a dictionary
+* you can insert dataframes into mongo using iterrows and casting each row as a dictionary
+* you can insert anything you want into a mongo collection, even if it's different from the collection
+* pandas will impose structure on a dictionary list
 
 
 ```python
